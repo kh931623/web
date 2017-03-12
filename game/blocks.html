@@ -3,9 +3,74 @@
     <head>
         <meta charset="utf-8">
         <title>Block</title>
-        
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+        <script type="text/javascript">
+            $(function () {
+                var canvas = document.getElementById('canvas');
+                var ctx = canvas.getContext('2d');
+
+                function myRand(low, up) {
+                    return Math.floor(Math.random() * (up - low) + low);
+                }
+
+                var game = {
+                    time: 60,
+                    ints: [],
+                    width: canvas.width / 10,
+                    height: canvas.height / 10,
+                    start: function () {
+                        $("#timer").html(this.time);
+                        this.first = new Date().getTime();
+
+                        // time counting.
+                        this.ints.push(setInterval(() => {
+                            let span = (new Date().getTime() - game.first) / 1000;
+                            let show = parseInt(this.time - span);
+                            $("#timer").html(show);
+
+                            if (show <= 0)
+                                this.end();
+                        }, 15));
+
+                        // making blocks
+                        ctx.fillStyle = "#e67536";
+                        ctx.fillRect(this.width * myRand(0, 7), 0, this.width, this.height);
+
+                        // updateing blocks
+
+
+                        // judge the game
+                    },
+                    end: function () {
+                        for (let i = 0; i < this.ints.length; i++)
+                            clearInterval(this.ints[i]);
+                    }
+                };
+
+                $("#timer").html(game.time);
+                $("#start").click(function () {
+                    game.start();
+                });
+            });
+        </script>
+        <style>
+            .cont {
+                width: 70%;
+                margin: auto;
+            }
+
+            #canvas {
+                border: 1px solid black;
+            }
+        </style>
     </head>
     <body>
-
+        <div class="cont">
+            <h1>A little game of falling blocks.</h1>
+            <p>Time: <span id='timer'></span></p>
+            <button id='start'>New Game</button>
+            <br>
+            <canvas id="canvas" width="800" height="600"></canvas>
+        </div>
     </body>
 </html>

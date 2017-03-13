@@ -14,10 +14,9 @@
                 }
 
                 class obj {
-                    constructor(x, y, c) {
+                    constructor(x, y) {
                         this.x = x;
                         this.y = y;
-                        this.color = c;
                     }
                 }
 
@@ -27,10 +26,17 @@
                     width: canvas.width / 10,
                     height: canvas.height / 10,
                     player: null,
+                    pcolor: "#0c8a19",
+                    bcolor: "#d28115",
+                    bacc: canvas.height / 3 / 30,
                     objs: [],
                     start: function () {
                         $("#timer").html(this.time);
                         this.first = new Date().getTime();
+                        if (this.ints) {
+                            this.clear();
+                        }
+                        this.ints = [];
 
                         // time counting.
                         this.ints.push(setInterval(() => {
@@ -43,25 +49,27 @@
                         }, 15));
 
                         // makeing player object
-                        this.player = new obj(Math.random() * 601, canvas.height - this.height, "#0c8a19");
-                        this.objs = [];
+                        this.player = new obj(Math.random() * 601, canvas.height - this.height);
+
                         // making blocks
-                        this.objs.push(new obj(this.width * myRand(0, 7), 0, "#d28115"));
-                        console.log(this.objs);
+                        this.objs = [];
+                        this.objs.push(new obj(this.width * myRand(0, 7), -this.height));
+
                         // updateing blocks
+                        this.ints.push(setInterval(() => {
+                            for (let i = 0; i < this.objs.length; i++) {
+                                this.objs[i].y += this.bacc;
+                            }
+                        }, 1000 / 30));
 
                         // drawing
                         this.ints.push(setInterval(() => {
                             ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            ctx.fillStyle = this.player.color;
+                            ctx.fillStyle = this.pcolor;
                             ctx.fillRect(this.player.x, this.player.y, this.width, this.height);
-                            // this.objs.forEach((item) => {
-                            //     ctx.fillStyle = item.color;
-                            //     ctx.fillRect(item.x, item.y, this.widht, this.height);
-                            // });
+                            ctx.fillStyle = this.bcolor;
                             for (let i = 0; i < this.objs.length; i++) {
                                 let item = this.objs[i];
-                                ctx.fillStyle = item.color;
                                 ctx.fillRect(item.x, item.y, this.width, this.height);
                             }
                         }, 1000 / 60));
@@ -69,6 +77,9 @@
                         // judge the game
                     },
                     end: function (win) {
+                        this.clear();
+                    },
+                    clear: function () {
                         for (let i = 0; i < this.ints.length; i++)
                             clearInterval(this.ints[i]);
                     }

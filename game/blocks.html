@@ -10,67 +10,114 @@
                 var ctx = canvas.getContext('2d');
 
                 function myRand(low, up) {
-                    return Math.floor(Math.random() * (up - low) + low);
+                    return (Math.random() * (up - low + 1) + low);
                 }
 
                 class obj {
-                    constructor(x, y, c) {
+                    constructor(x, y, v = null) {
                         this.x = x;
                         this.y = y;
-                        this.color = c;
                     }
                 }
 
                 var game = {
                     time: 60,
-                    ints: [],
                     width: canvas.width / 10,
                     height: canvas.height / 10,
                     player: null,
-                    objs: [],
+                    pcolor: "#0c8a19",
+                    bcolor: "#d28115",
+                    xv: canvas.width / 2 / 100,
+                    pxv: 0,
+                    v: canvas.height / 3 / 200,
+                    ending: {
+                        won: 'You won!',
+                        lose: 'You lost!'
+                    },
                     start: function () {
+                        if (this.int) {
+                            clearInterval(this.int);
+                        }
                         $("#timer").html(this.time);
                         this.first = new Date().getTime();
-
-                        // time counting.
-                        this.ints.push(setInterval(() => {
-                            let span = (new Date().getTime() - game.first) / 1000;
-                            let show = parseInt(this.time - span);
-                            $("#timer").html(show);
-
-                            if (show <= 0)
-                                this.end();
-                        }, 15));
-
+                        this.pxv = 0;
                         // makeing player object
-                        this.player = new obj(Math.random() * 601, canvas.height - this.height, "#0c8a19");
-                        this.objs = [];
+                        this.player = new obj(Math.random() * 601, canvas.height - this.height);
+
                         // making blocks
-                        this.objs.push(new obj(this.width * myRand(0, 7), 0, "#d28115"));
-                        console.log(this.objs);
-                        // updateing blocks
+                        this.objs = [];
+                        this.size = 1;
+                        this.objs.push(new obj(
+                            myRand(0, canvas.width - this.width),
+                            -this.height
+                        ));
 
-                        // drawing
-                        this.ints.push(setInterval(() => {
-                            ctx.clearRect(0, 0, canvas.width, canvas.height);
-                            ctx.fillStyle = this.player.color;
-                            ctx.fillRect(this.player.x, this.player.y, this.width, this.height);
-                            // this.objs.forEach((item) => {
-                            //     ctx.fillStyle = item.color;
-                            //     ctx.fillRect(item.x, item.y, this.widht, this.height);
-                            // });
-                            for (let i = 0; i < this.objs.length; i++) {
-                                let item = this.objs[i];
-                                ctx.fillStyle = item.color;
-                                ctx.fillRect(item.x, item.y, this.width, this.height);
+                        // running the game
+                        this.int = setInterval(() => {
+                            let span = (new Date().getTime() - this.first) / 1000;
+                            let result = parseInt(this.time - span);
+                            $("#timer").html(result);
+
+                            if (parseInt(span / this.size * 1.5) === 1) {
+                                this.size++;
+                                this.objs.push(new obj(
+                                    myRand(0, canvas.width - this.width),
+                                    -this.height
+                                ));
                             }
-                        }, 1000 / 60));
-
-                        // judge the game
+                            this.update();
+                            this.draw();
+                            this.judge();
+                            // console.log(this.objs.length);
+                            if (result <= 0) {
+                                this.end('won');
+                            }
+                        }, 5);
                     },
-                    end: function (win) {
-                        for (let i = 0; i < this.ints.length; i++)
-                            clearInterval(this.ints[i]);
+                    update: function () {
+                        let rb = canvas.width - this.width;
+                        // if (this.player.x >= 0 && this.player.x <= rb) {
+                        //     this.player.x += this.pxv;
+                        // }
+                        this.player.x += this.pxv;
+                        if (this.player.x < 0)
+                            this.player.x = 0;
+                        else if (this.player.x > rb)
+                            this.player.x = rb;
+                        for (let i = 0; i < this.objs.length; i++) {
+                            this.objs[i].y += this.v;
+                        }
+
+                        this.objs = this.objs.filter(function (item) {
+                            return item.y < canvas.height;
+                        });
+                    },
+                    draw: function () {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = this.pcolor;
+                        ctx.fillRect(this.player.x, this.player.y, this.width, this.height);
+                        ctx.fillStyle = this.bcolor;
+                        for (let i = 0; i < this.objs.length; i++) {
+                            let item = this.objs[i];
+                            ctx.fillRect(item.x, item.y, this.width, this.height);
+                        }
+                    },
+                    judge: function () {
+                        for (let i = 0; i < this.objs.length; i++) {
+                            let item = this.objs[i];
+                            let dx = Math.abs(this.player.x - item.x);
+                            let dy = Math.abs(this.player.y - item.y);
+                            if (dx <= this.width && dy <= this.height) {
+                                this.end('lose');
+                                console.log(dx, dy);
+                            }
+                        }
+                    },
+                    end: function (r) {
+                        clearInterval(this.int);
+                        ctx.fillStyle = "#d71c1c";
+                        ctx.font = "30px Consolas";
+                        ctx.fillText(this.ending[r], canvas.width / 2 - this.width, canvas.height / 2 - this.height);
                     }
                 };
 
@@ -78,6 +125,21 @@
                 $("#start").click(function () {
                     game.start();
                 });
+
+                $("body").keydown(function (e) {
+                    if (e.which == 37) {
+                        game.pxv = -game.xv;
+                    }
+                    else if (e.which == 39) {
+                        game.pxv = game.xv;
+                    }
+                });
+
+                $("body").keyup(function (e) {
+                    game.pxv = 0;
+                });
+
+                // console.log(game.ending);
             });
         </script>
         <style>
@@ -89,15 +151,22 @@
             #canvas {
                 border: 1px solid black;
             }
+
+            .center {
+                text-align: center;
+            }
         </style>
     </head>
     <body>
         <div class="cont">
             <h1>A little game of falling blocks.</h1>
+            <h3>How long can you last?</h3>
             <p>Time: <span id='timer'></span></p>
             <button id='start'>New Game</button>
             <br>
-            <canvas id="canvas" width="800" height="600"></canvas>
+            <div class="center">
+                <canvas id="canvas" width="800" height="600"></canvas>
+            </div>
         </div>
     </body>
 </html>

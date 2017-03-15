@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Greedy Snake</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+        <script type="text/javascript">
+            $(function () {
+                var canvas = document.getElementById('canvas');
+                var ctx = canvas.getContext('2d');
+
+                ctx.beginPath();
+                ctx.moveTo(0, 100);
+                ctx.lineTo(canvas.width, 100);
+                ctx.stroke();
+
+                ctx.font = '24px Consolas';
+
+                function myRand(low, up) {
+                    return Math.floor(Math.random() * (up - low + 1) + low);
+                }
+
+                class block {
+                    constructor(x, y) {
+                        this.x = x;
+                        this.y = y;
+                    }
+
+                    add(other) {
+                        return new block(this.x + other.x, this.y + other.y);
+                    }
+                }
+
+                var game = {
+                    row: parseInt((canvas.height - 100) / 20),
+                    col: parseInt(canvas.width/ 20),
+                    yoffset: 100,
+                    direction: null,
+                    move: {
+                        left: new block(-1, 0),
+                        up: new block(0, -1),
+                        right: new block(1, 0),
+                        down: new block(0, 1)
+                    },
+                    mindex: [
+                        'left',
+                        'up',
+                        'right',
+                        'down'
+                    ],
+                    opposite: {
+                        left: 39,
+                        up: 40,
+                        right: 37,
+                        down: 38
+                    },
+
+                    start: function () {
+                        // init data
+                        this.area = [];
+                        this.area.length = this.row * this.col;
+                        this.area.fill(false);
+
+                        // clear old data
+                        if (this.int)
+                            clearInterval(this.int);
+                        this.player = {
+                            score: 0,
+                            data: []
+                        };
+
+                        // init the position of the snake.
+                        this.player.data.push(new block(20, 10));
+                        this.player.data.push(new block(19, 10));
+                        this.player.data.push(new block(18, 10));
+
+                        // init prey
+                        this.prey = new block(10, 10);
+
+                        this.direction = 'down';
+
+                        this.int = setInterval(() => {
+                            this.update();
+                            this.judge();
+                            this.draw();
+                        }, 150);
+                    },
+                    update: function () {
+                        let f = this.player.data[0];
+                        this.player.data.splice(0, 0, f.add(this.move[this.direction]));
+                        this.player.data.pop();
+                    },
+                    draw: function () {
+                        // show score
+                        ctx.clearRect(50, 20, 300, 70);
+                        ctx.fillStyle = "#2a20a1";
+                        ctx.fillText(`Score: ${this.player.score}`, 50, 50);
+
+                        // show snake
+                        ctx.clearRect(0, 101, canvas.width, canvas.height);
+                        let pdata = this.player.data;
+                        let f = pdata[0];
+                        // head
+                        ctx.fillStyle = "#12f4a2";
+                        ctx.fillRect(f.x * 20, f.y * 20 + 100, 20, 20);
+
+                        // body
+                        ctx.fillStyle = "#0f790d";
+                        for (let i = 1; i < pdata.length; i++) {
+                            let item = pdata[i];
+                            ctx.fillRect(item.x * 20, item.y * 20 + 100, 20, 20);
+                        }
+
+                        // show prey
+                        ctx.fillStyle = "#db8a00";
+                        ctx.fillRect(this.prey.x * 20, this.prey.y * 20 + 100, 20, 20);
+                    },
+                    judge: function () {
+                        // got the prey?
+                        let f = this.player.data[0];
+                        if (
+                            f.x == this.prey.x &&
+                            f.y == this.prey.y
+                        ) {
+                            this.prey.x = this.prey.y = -10;
+                            this.player.score++;
+                            this.append();
+                        }
+                        // crash?
+
+                        if (
+                            f.x <= 0 ||
+                            f.x >= this.col - 1 ||
+                            f.y >= this.row - 1 ||
+                            f.y <= 0
+                        ) {
+                            this.end();
+                        }
+                    },
+                    append: function () {
+                        let pdata = this.player.data;
+                        pdata.push(pdata[pdata.length - 1].add(this.move[this.direction]));
+                    },
+                    end: function () {
+                        clearInterval(this.int);
+                        ctx.fillStyle = "#d71c1c"
+                        ctx.fillText("You Died!", 600, 50);
+                    }
+                };
+
+                $("#start").click(function () {
+                    game.start();
+                });
+
+                $("body").keydown(function (e) {
+                    if (game.opposite[game.direction] == e.which)
+                        return;
+                    switch (e.which) {
+                        case 37:
+                            game.direction = 'left'
+                            break;
+                        case 38:
+                            game.direction = 'up'
+                            break;
+                        case 39:
+                            game.direction = 'right'
+                            break;
+                        case 40:
+                            game.direction = 'down'
+                            break;
+                        default:
+                    }
+                });
+
+                $("body").keyup(function (e) {
+
+                });
+
+                // game.end();
+            });
+        </script>
+        <style>
+            .cont {
+                width: 70%;
+                margin: auto;
+            }
+
+            #canvas {
+                border: 1px solid black;
+            }
+
+            .center {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="cont">
+            <h1>Greedy Snake.</h1>
+            <h3>How many preys you can get?</h3>
+            <button id='start'>New Game</button>
+            <br>
+            <div class="center">
+                <canvas id="canvas" width="800" height="700"></canvas>
+            </div>
+        </div>
+    </body>
+</html>

@@ -31,6 +31,13 @@
                     }
                 }
 
+                class anti {
+                    constructor(key, d) {
+                        this.key = key;
+                        this.d = d;
+                    }
+                }
+
                 var game = {
                     row: parseInt((canvas.height - 100) / 20),
                     col: parseInt(canvas.width / 20),
@@ -42,24 +49,19 @@
                         right: new block(1, 0),
                         down: new block(0, 1)
                     },
-                    mindex: [
-                        'left',
-                        'up',
-                        'right',
-                        'down'
-                    ],
                     opposite: {
-                        left: 39,
-                        up: 40,
-                        right: 37,
-                        down: 38
+                        left: new anti(39, 'right'),
+                        up: new anti(40, 'down'),
+                        right: new anti(37, 'left'),
+                        down: new anti(38, 'up')
                     },
 
                     start: function () {
+                        ctx.clearRect(600, 20, 200, 30);
                         // init data
                         this.area = [];
                         this.area.length = this.row * this.col;
-                        this.area.fill(false);
+                        this.area.fill(true);
 
                         // clear old data
                         if (this.int)
@@ -70,14 +72,25 @@
                         };
 
                         // init the position of the snake.
-                        this.player.data.push(new block(20, 10));
-                        this.player.data.push(new block(19, 10));
-                        this.player.data.push(new block(18, 10));
+                        // this.player.data.push(new block(20, 10));
+                        // this.player.data.push(new block(19, 10));
+                        // this.player.data.push(new block(18, 10));
+
+                        let options = [];
+                        for (x in this.move) {
+                            options.push(x);
+                        }
+                        this.direction = options[myRand(0, options.length - 1)];
+
+                        this.player.data.push(new block(myRand(5, this.col - 5), myRand(5, this.row - 5)));
+                        let f = this.player.data[0];
+                        this.occupy(f);
+                        this.append();
+                        this.append();
+
 
                         // init prey
-                        this.prey = new block(10, 10);
-
-                        this.direction = 'down';
+                        this.genPrey();
 
                         this.int = setInterval(() => {
                             this.update();
@@ -89,10 +102,15 @@
                         let f = this.player.data[0];
                         this.player.data.splice(0, 0, f.add(this.move[this.direction]));
                         this.player.data.pop();
+
+                        this.area.fill(true);
+                        this.player.data.forEach((item) => {
+                            this.occupy(item);
+                        });
                     },
                     draw: function () {
                         // show score
-                        ctx.clearRect(50, 20, 300, 70);
+                        ctx.clearRect(0, 0, 400, 99);
                         ctx.fillStyle = "#2a20a1";
                         ctx.fillText(`Score: ${this.player.score}`, 50, 50);
 
@@ -108,7 +126,7 @@
                         ctx.fillStyle = "#0f790d";
                         for (let i = 1; i < pdata.length; i++) {
                             let item = pdata[i];
-                            ctx.fillRect(item.x * 20, item.y * 20 + 100, 20, 20);
+                            ctx.fillRect(item.x * 20, item.y * 20 + this.yoffset, 20, 20);
                         }
 
                         // show prey
@@ -125,39 +143,60 @@
                             this.prey.x = this.prey.y = -10;
                             this.player.score++;
                             this.append();
+                            this.genPrey();
                         }
-                        // crash?
 
+                        // crash?
                         if (
-                            f.x <= 0 ||
-                            f.x >= this.col - 1 ||
-                            f.y >= this.row - 1 ||
-                            f.y <= 0
+                            f.x < 0 ||
+                            f.x > this.col - 1 ||
+                            f.y > this.row - 1 ||
+                            f.y < 0
                         ) {
-                            this.end();
+                            this.end("You Crash!");
+                        }
+
+                        let pdata = this.player.data;
+                        for (let i = 1; i < pdata.length; i++) {
+                            if (f.x == pdata[i].x && f.y == pdata[i].y) {
+                                this.end("You Bite On Your Self!");
+                            }
                         }
                     },
                     append: function () {
                         let pdata = this.player.data;
-                        pdata.push(pdata[pdata.length - 1].add(this.move[this.direction]));
+                        pdata.push(this.getLast().add(this.move[this.opposite[this.direction].d]));
+                        this.occupy(this.getLast());
                     },
                     getLast: function () {
                         let pdata = this.player.data;
                         return pdata[pdata.length - 1];
                     },
-                    end: function () {
+                    occupy: function (now) {
+                        this.area[now.y * this.col + now.x] = false;
+                    },
+                    genPrey: function () {
+                        this.prey = new block(myRand(0, this.col - 1), myRand(0, this.row -1));
+                        while (!this.check()) {
+                            this.prey = new block(myRand(0, this.col - 1), myRand(0, this.row -1));
+                        }
+                    },
+                    check: function () {
+                        return this.area[this.prey.y * this.col + this.prey.x];
+                    },
+                    end: function (r) {
                         clearInterval(this.int);
                         ctx.fillStyle = "#d71c1c"
-                        ctx.fillText("You Died!", 600, 50);
+                        ctx.fillText(r, 500, 50);
                     }
                 };
 
-                $("#start").click(function () {
-                    game.start();
-                });
-
                 $("body").keydown(function (e) {
-                    if (game.opposite[game.direction] == e.which)
+                    if (e.which == 32) {
+                        game.start();
+                        return;
+                    }
+                    if (game.opposite[game.direction].key == e.which)
                         return;
                     switch (e.which) {
                         case 37:
@@ -176,11 +215,6 @@
                     }
                 });
 
-                $("body").keyup(function (e) {
-
-                });
-
-                // game.end();
             });
         </script>
         <style>
@@ -203,7 +237,7 @@
         <div class="cont">
             <h1>Greedy Snake.</h1>
             <h3>How many preys you can get?</h3>
-            <button id='start'>New Game</button>
+            <h3>Press space to start a new game!</h3>
             <br>
             <div class="center">
                 <canvas id="canvas" width="800" height="700"></canvas>

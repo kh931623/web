@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>test</title>
+        <script type="text/javascript">
+            var a = [1, 2, 3, 4, 5];
+
+            a.forEach(function (item) {
+                console.log(item);
+            });
+
+            var me = {
+                age: 25,
+                height: 180,
+                weight: 90
+            };
+
+            for (x in me) {
+                console.log(x);
+                me[x] += 10;
+            }
+
+            console.log("hello");
+            console.log(a);
+            console.log(me);
+        </script>
+    </head>
+    <body>
+
+    </body>
+</html>

@@ -57,10 +57,11 @@
                     },
 
                     start: function () {
+                        ctx.clearRect(600, 20, 200, 30);
                         // init data
                         this.area = [];
                         this.area.length = this.row * this.col;
-                        this.area.fill(false);
+                        this.area.fill(true);
 
                         // clear old data
                         if (this.int)
@@ -82,12 +83,14 @@
                         this.direction = options[myRand(0, options.length - 1)];
 
                         this.player.data.push(new block(myRand(5, this.col - 5), myRand(5, this.row - 5)));
+                        let f = this.player.data[0];
+                        this.occupy(f);
                         this.append();
                         this.append();
 
 
                         // init prey
-                        this.prey = new block(10, 10);
+                        this.genPrey();
 
                         this.int = setInterval(() => {
                             this.update();
@@ -99,10 +102,15 @@
                         let f = this.player.data[0];
                         this.player.data.splice(0, 0, f.add(this.move[this.direction]));
                         this.player.data.pop();
+
+                        this.area.fill(true);
+                        this.player.data.forEach((item) => {
+                            this.occupy(item);
+                        });
                     },
                     draw: function () {
                         // show score
-                        ctx.clearRect(50, 20, 300, 70);
+                        ctx.clearRect(0, 0, 400, 99);
                         ctx.fillStyle = "#2a20a1";
                         ctx.fillText(`Score: ${this.player.score}`, 50, 50);
 
@@ -118,7 +126,7 @@
                         ctx.fillStyle = "#0f790d";
                         for (let i = 1; i < pdata.length; i++) {
                             let item = pdata[i];
-                            ctx.fillRect(item.x * 20, item.y * 20 + 100, 20, 20);
+                            ctx.fillRect(item.x * 20, item.y * 20 + this.yoffset, 20, 20);
                         }
 
                         // show prey
@@ -135,30 +143,51 @@
                             this.prey.x = this.prey.y = -10;
                             this.player.score++;
                             this.append();
+                            this.genPrey();
                         }
-                        // crash?
 
+                        // crash?
                         if (
-                            f.x <= 0 ||
-                            f.x >= this.col - 1 ||
-                            f.y >= this.row - 1 ||
-                            f.y <= 0
+                            f.x < 0 ||
+                            f.x > this.col - 1 ||
+                            f.y > this.row - 1 ||
+                            f.y < 0
                         ) {
-                            this.end();
+                            this.end("You Crash!");
+                        }
+
+                        let pdata = this.player.data;
+                        for (let i = 1; i < pdata.length; i++) {
+                            if (f.x == pdata[i].x && f.y == pdata[i].y) {
+                                this.end("You Bite On Your Self!");
+                            }
                         }
                     },
                     append: function () {
                         let pdata = this.player.data;
                         pdata.push(this.getLast().add(this.move[this.opposite[this.direction].d]));
+                        this.occupy(this.getLast());
                     },
                     getLast: function () {
                         let pdata = this.player.data;
                         return pdata[pdata.length - 1];
                     },
-                    end: function () {
+                    occupy: function (now) {
+                        this.area[now.y * this.col + now.x] = false;
+                    },
+                    genPrey: function () {
+                        this.prey = new block(myRand(0, this.col - 1), myRand(0, this.row -1));
+                        while (!this.check()) {
+                            this.prey = new block(myRand(0, this.col - 1), myRand(0, this.row -1));
+                        }
+                    },
+                    check: function () {
+                        return this.area[this.prey.y * this.col + this.prey.x];
+                    },
+                    end: function (r) {
                         clearInterval(this.int);
                         ctx.fillStyle = "#d71c1c"
-                        ctx.fillText("You Died!", 600, 50);
+                        ctx.fillText(r, 500, 50);
                     }
                 };
 

@@ -33,7 +33,7 @@
 
                 var game = {
                     row: parseInt((canvas.height - 100) / 20),
-                    col: parseInt(canvas.width/ 20),
+                    col: parseInt(canvas.width / 20),
                     yoffset: 100,
                     direction: null,
                     move: {
@@ -141,6 +141,10 @@
                         let pdata = this.player.data;
                         pdata.push(pdata[pdata.length - 1].add(this.move[this.direction]));
                     },
+                    getLast: function () {
+                        let pdata = this.player.data;
+                        return pdata[pdata.length - 1];
+                    },
                     end: function () {
                         clearInterval(this.int);
                         ctx.fillStyle = "#d71c1c"
@@ -187,6 +191,7 @@
 
             #canvas {
                 border: 1px solid black;
+                margin-top: 20px;
             }
 
             .center {

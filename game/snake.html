@@ -31,6 +31,13 @@
                     }
                 }
 
+                class anti {
+                    constructor(key, d) {
+                        this.key = key;
+                        this.d = d;
+                    }
+                }
+
                 var game = {
                     row: parseInt((canvas.height - 100) / 20),
                     col: parseInt(canvas.width / 20),
@@ -42,17 +49,11 @@
                         right: new block(1, 0),
                         down: new block(0, 1)
                     },
-                    mindex: [
-                        'left',
-                        'up',
-                        'right',
-                        'down'
-                    ],
                     opposite: {
-                        left: 39,
-                        up: 40,
-                        right: 37,
-                        down: 38
+                        left: new anti(39, 'right'),
+                        up: new anti(40, 'down'),
+                        right: new anti(37, 'left'),
+                        down: new anti(38, 'up')
                     },
 
                     start: function () {
@@ -70,14 +71,23 @@
                         };
 
                         // init the position of the snake.
-                        this.player.data.push(new block(20, 10));
-                        this.player.data.push(new block(19, 10));
-                        this.player.data.push(new block(18, 10));
+                        // this.player.data.push(new block(20, 10));
+                        // this.player.data.push(new block(19, 10));
+                        // this.player.data.push(new block(18, 10));
+
+                        let options = [];
+                        for (x in this.move) {
+                            options.push(x);
+                        }
+                        this.direction = options[myRand(0, options.length - 1)];
+
+                        this.player.data.push(new block(myRand(5, this.col - 5), myRand(5, this.row - 5)));
+                        this.append();
+                        this.append();
+
 
                         // init prey
                         this.prey = new block(10, 10);
-
-                        this.direction = 'down';
 
                         this.int = setInterval(() => {
                             this.update();
@@ -139,7 +149,7 @@
                     },
                     append: function () {
                         let pdata = this.player.data;
-                        pdata.push(pdata[pdata.length - 1].add(this.move[this.direction]));
+                        pdata.push(this.getLast().add(this.move[this.opposite[this.direction].d]));
                     },
                     getLast: function () {
                         let pdata = this.player.data;
@@ -152,12 +162,12 @@
                     }
                 };
 
-                $("#start").click(function () {
-                    game.start();
-                });
-
                 $("body").keydown(function (e) {
-                    if (game.opposite[game.direction] == e.which)
+                    if (e.which == 32) {
+                        game.start();
+                        return;
+                    }
+                    if (game.opposite[game.direction].key == e.which)
                         return;
                     switch (e.which) {
                         case 37:
@@ -176,11 +186,6 @@
                     }
                 });
 
-                $("body").keyup(function (e) {
-
-                });
-
-                // game.end();
             });
         </script>
         <style>
@@ -203,7 +208,7 @@
         <div class="cont">
             <h1>Greedy Snake.</h1>
             <h3>How many preys you can get?</h3>
-            <button id='start'>New Game</button>
+            <h3>Press space to start a new game!</h3>
             <br>
             <div class="center">
                 <canvas id="canvas" width="800" height="700"></canvas>
